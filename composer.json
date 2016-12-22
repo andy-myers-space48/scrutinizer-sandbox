@@ -1,0 +1,11 @@
+{
+    "name": "andymyers/scrutinizer-sandbox",
+    "description": "Testing only",
+    "authors": [
+        {
+            "name": "Andy Myers",
+            "email": "andy.myers@space48.com"
+        }
+    ],
+    "require": {}
+}
