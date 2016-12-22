@@ -51,9 +51,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 class Cm_RedisSession_Model_Session extends Mage_Core_Model_Mysql4_Session
 {
-    const SLEEP_TIME         = 500000;   /* Sleep 0.5 seconds between lock attempts (1,000,000 == 1 second) */
-    const FAIL_AFTER         = 15;       /* Try to break lock for at most this many seconds */
-    const DETECT_ZOMBIES     = 20;        /* Try to detect zombies every this many tries */
+    const SLEEP_TIME         = 500000; /* Sleep 0.5 seconds between lock attempts (1,000,000 == 1 second) */
+    const FAIL_AFTER         = 15; /* Try to break lock for at most this many seconds */
+    const DETECT_ZOMBIES     = 20; /* Try to detect zombies every this many tries */
     const SESSION_PREFIX     = 'sess_';
     const LOG_FILE           = 'redis_session.log';
 
@@ -64,13 +64,13 @@ class Cm_RedisSession_Model_Session extends Mage_Core_Model_Mysql4_Session
     const DEFAULT_COMPRESSION_THRESHOLD = 2048;
     const DEFAULT_COMPRESSION_LIB       = 'gzip';
     const DEFAULT_LOG_LEVEL             = 1;
-    const DEFAULT_MAX_CONCURRENCY       = 6;        /* The maximum number of concurrent lock waiters per session */
-    const DEFAULT_BREAK_AFTER           = 30;       /* Try to break the lock after this many seconds */
-    const DEFAULT_FIRST_LIFETIME        = 600;      /* The session lifetime for non-bots on the first write */
-    const DEFAULT_BOT_FIRST_LIFETIME    = 60;       /* The session lifetime for bots on the first write */
-    const DEFAULT_BOT_LIFETIME          = 7200;     /* The session lifetime for bots - shorter to prevent bots from wasting backend storage */
-    const DEFAULT_DISABLE_LOCKING       = FALSE;    /* Session locking is enabled by default */
-    const DEFAULT_MAX_LIFETIME		= 2592000;  /* Redis backend limit */
+    const DEFAULT_MAX_CONCURRENCY       = 6; /* The maximum number of concurrent lock waiters per session */
+    const DEFAULT_BREAK_AFTER           = 30; /* Try to break the lock after this many seconds */
+    const DEFAULT_FIRST_LIFETIME        = 600; /* The session lifetime for non-bots on the first write */
+    const DEFAULT_BOT_FIRST_LIFETIME    = 60; /* The session lifetime for bots on the first write */
+    const DEFAULT_BOT_LIFETIME          = 7200; /* The session lifetime for bots - shorter to prevent bots from wasting backend storage */
+    const DEFAULT_DISABLE_LOCKING       = FALSE; /* Session locking is enabled by default */
+    const DEFAULT_MAX_LIFETIME		= 2592000; /* Redis backend limit */
     const DEFAULT_MIN_LIFETIME		= 60;
 
     /** @var bool */
@@ -107,40 +107,40 @@ class Cm_RedisSession_Model_Session extends Mage_Core_Model_Mysql4_Session
             return;
         }
 
-        $this->_logLevel =  ((int) $config->descend('log_level') ?: self::DEFAULT_LOG_LEVEL);
+        $this->_logLevel = ((int)$config->descend('log_level') ?: self::DEFAULT_LOG_LEVEL);
         if ($this->_logLevel >= Zend_Log::DEBUG) {
             $timeStart = microtime(true);
         }
 
         // Database config
-        $host =        ((string) $config->descend('host') ?: '127.0.0.1');
-        $port =           ((int) $config->descend('port') ?: '6379');
-        $pass =        ((string) $config->descend('password') ?: '');
-        $timeout =      ((float) $config->descend('timeout') ?: self::DEFAULT_TIMEOUT);
-        $persistent =  ((string) $config->descend('persistent') ?: '');
-        $this->_dbNum =   ((int) $config->descend('db') ?: 0);
+        $host = ((string)$config->descend('host') ?: '127.0.0.1');
+        $port = ((int)$config->descend('port') ?: '6379');
+        $pass = ((string)$config->descend('password') ?: '');
+        $timeout = ((float)$config->descend('timeout') ?: self::DEFAULT_TIMEOUT);
+        $persistent = ((string)$config->descend('persistent') ?: '');
+        $this->_dbNum = ((int)$config->descend('db') ?: 0);
 
         // General config
-        $this->_compressionThreshold =  ((int) $config->descend('compression_threshold') ?: self::DEFAULT_COMPRESSION_THRESHOLD);
-        $this->_compressionLib =     ((string) $config->descend('compression_lib') ?: self::DEFAULT_COMPRESSION_LIB);
-        $this->_maxConcurrency =        ((int) $config->descend('max_concurrency') ?: self::DEFAULT_MAX_CONCURRENCY);
-        $this->_breakAfter =          ((float) $config->descend('break_after_'.session_name()) ?: self::DEFAULT_BREAK_AFTER);
-        $this->_maxLifetime =           ((int) $config->descend('max_lifetime') ?: self::DEFAULT_MAX_LIFETIME);
-        $this->_minLifetime =           ((int) $config->descend('min_lifetime') ?: self::DEFAULT_MIN_LIFETIME);
+        $this->_compressionThreshold = ((int)$config->descend('compression_threshold') ?: self::DEFAULT_COMPRESSION_THRESHOLD);
+        $this->_compressionLib = ((string)$config->descend('compression_lib') ?: self::DEFAULT_COMPRESSION_LIB);
+        $this->_maxConcurrency = ((int)$config->descend('max_concurrency') ?: self::DEFAULT_MAX_CONCURRENCY);
+        $this->_breakAfter = ((float)$config->descend('break_after_' . session_name()) ?: self::DEFAULT_BREAK_AFTER);
+        $this->_maxLifetime = ((int)$config->descend('max_lifetime') ?: self::DEFAULT_MAX_LIFETIME);
+        $this->_minLifetime = ((int)$config->descend('min_lifetime') ?: self::DEFAULT_MIN_LIFETIME);
         $this->_useLocking = defined('CM_REDISSESSION_LOCKING_ENABLED')
                     ? CM_REDISSESSION_LOCKING_ENABLED
-                    : ! ((int) $config->descend('disable_locking') ?: self::DEFAULT_DISABLE_LOCKING);
+                    : !((int)$config->descend('disable_locking') ?: self::DEFAULT_DISABLE_LOCKING);
 
         // Use sleep time multiplier so break time is in seconds
-        $this->_breakAfter = (int) round((1000000 / self::SLEEP_TIME) * $this->_breakAfter);
-        $this->_failAfter = (int) round((1000000 / self::SLEEP_TIME) * self::FAIL_AFTER);
+        $this->_breakAfter = (int)round((1000000 / self::SLEEP_TIME) * $this->_breakAfter);
+        $this->_failAfter = (int)round((1000000 / self::SLEEP_TIME) * self::FAIL_AFTER);
 
         // Connect and authenticate
         $this->_redis = new Credis_Client($host, $port, $timeout, $persistent);
         if (!empty($pass)) {
             $this->_redis->auth($pass) or Zend_Cache::throwException('Unable to authenticate with the redis server.');
         }
-        $this->_redis->setCloseOnDestruct(FALSE);  // Destructor order cannot be predicted
+        $this->_redis->setCloseOnDestruct(FALSE); // Destructor order cannot be predicted
         $this->_useRedis = TRUE;
         if ($this->_logLevel >= Zend_Log::DEBUG) {
             $this->_log(sprintf("%s initialized for connection to %s:%s after %.5f seconds",
@@ -150,7 +150,7 @@ class Cm_RedisSession_Model_Session extends Mage_Core_Model_Mysql4_Session
     }
 
     /**
-     * @param $msg
+     * @param string $msg
      * @param $level
      */
     protected function _log($msg, $level = Zend_Log::DEBUG)
@@ -165,7 +165,7 @@ class Cm_RedisSession_Model_Session extends Mage_Core_Model_Mysql4_Session
      */
     public function hasConnection()
     {
-        if( ! $this->_useRedis) return parent::hasConnection();
+        if (!$this->_useRedis) return parent::hasConnection();
 
         try {
             $this->_redis->connect();
@@ -194,11 +194,11 @@ class Cm_RedisSession_Model_Session extends Mage_Core_Model_Mysql4_Session
      */
     public function read($sessionId)
     {
-        if ( ! $this->_useRedis) return parent::read($sessionId);
+        if (!$this->_useRedis) return parent::read($sessionId);
         Varien_Profiler::start(__METHOD__);
 
         // Get lock on session. Increment the "lock" field and if the new value is 1, we have the lock.
-        $sessionId = self::SESSION_PREFIX.$sessionId;
+        $sessionId = self::SESSION_PREFIX . $sessionId;
         $tries = $waiting = $lock = 0;
         $lockPid = $oldLockPid = NULL; // Restart waiting for lock when current lock holder changes
         $detectZombies = FALSE;
@@ -221,7 +221,7 @@ class Cm_RedisSession_Model_Session extends Mage_Core_Model_Mysql4_Session
             }
 
             // If we got the lock, update with our pid and reset lock and expiration
-            if (   $lock == 1                          // We actually do have the lock
+            if ($lock == 1                          // We actually do have the lock
                 || (
                         $tries >= $this->_breakAfter   // We are done waiting and want to start trying to break it
                      && $oldLockPid == $lockPid        // Nobody else got the lock while we were waiting
@@ -232,7 +232,7 @@ class Cm_RedisSession_Model_Session extends Mage_Core_Model_Mysql4_Session
             }
 
             // Otherwise, add to "wait" counter and continue
-            else if ( ! $waiting) {
+            else if (!$waiting) {
                 $i = 0;
                 do {
                     $waiting = $this->_redis->hIncrBy($sessionId, 'wait', 1);
@@ -244,7 +244,7 @@ class Cm_RedisSession_Model_Session extends Mage_Core_Model_Mysql4_Session
                 // Detect broken sessions (e.g. caused by fatal errors)
                 if ($detectZombies) {
                     $detectZombies = FALSE;
-                    if ( $lock > $oldLock                 // lock shouldn't be less than old lock (another process broke the lock)
+                    if ($lock > $oldLock                 // lock shouldn't be less than old lock (another process broke the lock)
                       && $lock + 1 < $oldLock + $waiting // lock should be old+waiting, otherwise there must be a dead process
                     ) {
                         // Reset session to fresh state
@@ -291,14 +291,14 @@ class Cm_RedisSession_Model_Session extends Mage_Core_Model_Mysql4_Session
             }
             // Detect dead lock holder every 10 seconds (only works on same node as lock holder)
             if ($tries % self::DETECT_ZOMBIES == 0) {
-                Varien_Profiler::start(__METHOD__.'-detect-zombies');
+                Varien_Profiler::start(__METHOD__ . '-detect-zombies');
                 if ($this->_logLevel >= Zend_Log::DEBUG) {
                     $this->_log(sprintf(
                         "Checking for zombies after %.5f seconds of waiting...", (microtime(true) - $timeStart)
                     ));
                 }
                 $pid = $this->_redis->hGet($sessionId, 'pid');
-                if ($pid && ! $this->_pidExists($pid)) {
+                if ($pid && !$this->_pidExists($pid)) {
                     // Allow a live process to get the lock
                     $this->_redis->hSet($sessionId, 'lock', 0);
                     if ($this->_logLevel >= Zend_Log::INFO) {
@@ -308,10 +308,10 @@ class Cm_RedisSession_Model_Session extends Mage_Core_Model_Mysql4_Session
                             Mage::app()->getRequest()->getRequestUri(), Mage::app()->getRequest()->getClientIp(), Mage::app()->getRequest()->getHeader('User-Agent')
                         ), Zend_Log::INFO);
                     }
-                    Varien_Profiler::stop(__METHOD__.'-detect-zombies');
+                    Varien_Profiler::stop(__METHOD__ . '-detect-zombies');
                     continue;
                 }
-                Varien_Profiler::stop(__METHOD__.'-detect-zombies');
+                Varien_Profiler::stop(__METHOD__ . '-detect-zombies');
             }
             // Timeout
             if ($tries >= $this->_breakAfter + $this->_failAfter) {
@@ -328,9 +328,9 @@ class Cm_RedisSession_Model_Session extends Mage_Core_Model_Mysql4_Session
                         $sleepTime / 1000000, $sessionId, $tries, $lockPid, (microtime(true) - $timeStart)
                     ));
                 }
-                Varien_Profiler::start(__METHOD__.'-wait');
+                Varien_Profiler::start(__METHOD__ . '-wait');
                 usleep($sleepTime);
-                Varien_Profiler::stop(__METHOD__.'-wait');
+                Varien_Profiler::stop(__METHOD__ . '-wait');
             }
         }
         self::$failedLockAttempts = $tries;
@@ -339,12 +339,12 @@ class Cm_RedisSession_Model_Session extends Mage_Core_Model_Mysql4_Session
         if ($this->_logLevel >= Zend_Log::DEBUG) {
             $timeStart = microtime(true);
         }
-        list($sessionData, $sessionWrites) = $this->_redis->hMGet($sessionId, array('data','writes'));
+        list($sessionData, $sessionWrites) = $this->_redis->hMGet($sessionId, array('data', 'writes'));
         Varien_Profiler::stop(__METHOD__);
         if ($this->_logLevel >= Zend_Log::DEBUG) {
             $this->_log(sprintf("Data read for ID %s in %.5f seconds", $sessionId, (microtime(true) - $timeStart)));
         }
-        $this->_sessionWrites = (int) $sessionWrites;
+        $this->_sessionWrites = (int)$sessionWrites;
 
         $this->_redis->pipeline();
 
@@ -397,7 +397,7 @@ class Cm_RedisSession_Model_Session extends Mage_Core_Model_Mysql4_Session
     public function write($sessionId, $sessionData)
     {
         Varien_Profiler::start(__METHOD__);
-        if ( ! $this->_useRedis) return parent::write($sessionId, $sessionData);
+        if (!$this->_useRedis) return parent::write($sessionId, $sessionData);
         if ($this->_sessionWritten) {
             if ($this->_logLevel >= Zend_Log::DEBUG) {
                 $this->_log(sprintf("Repeated session write detected; skipping for ID %s", $sessionId));
@@ -412,10 +412,10 @@ class Cm_RedisSession_Model_Session extends Mage_Core_Model_Mysql4_Session
 
         // Do not overwrite the session if it is locked by another pid
         try {
-            if($this->_dbNum) $this->_redis->select($this->_dbNum);  // Prevent conflicts with other connections?
+            if ($this->_dbNum) $this->_redis->select($this->_dbNum); // Prevent conflicts with other connections?
 
-            if ( ! $this->_useLocking
-              || ( ! ($pid = $this->_redis->hGet('sess_'.$sessionId, 'pid')) || $pid == $this->_getPid())
+            if (!$this->_useLocking
+              || (!($pid = $this->_redis->hGet('sess_' . $sessionId, 'pid')) || $pid == $this->_getPid())
             ) {
                 $this->_writeRawSession($sessionId, $sessionData, $this->getLifeTime());
                 if ($this->_logLevel >= Zend_Log::DEBUG) {
@@ -436,7 +436,7 @@ class Cm_RedisSession_Model_Session extends Mage_Core_Model_Mysql4_Session
                 }
             }
         }
-        catch(Exception $e) {
+        catch (Exception $e) {
             if (class_exists('Mage', false)) {
                 Mage::logException($e);
             } else {
@@ -457,15 +457,15 @@ class Cm_RedisSession_Model_Session extends Mage_Core_Model_Mysql4_Session
      */
     public function destroy($sessionId)
     {
-        if ( ! $this->_useRedis) return parent::destroy($sessionId);
+        if (!$this->_useRedis) return parent::destroy($sessionId);
         Varien_Profiler::start(__METHOD__);
 
         if ($this->_logLevel >= Zend_Log::DEBUG) {
             $this->_log(sprintf("Destroying ID %s", $sessionId));
         }
         $this->_redis->pipeline();
-        if($this->_dbNum) $this->_redis->select($this->_dbNum);
-        $this->_redis->del(self::SESSION_PREFIX.$sessionId);
+        if ($this->_dbNum) $this->_redis->select($this->_dbNum);
+        $this->_redis->del(self::SESSION_PREFIX . $sessionId);
         $this->_redis->exec();
         Varien_Profiler::stop(__METHOD__);
         return TRUE;
@@ -478,7 +478,7 @@ class Cm_RedisSession_Model_Session extends Mage_Core_Model_Mysql4_Session
      */
     public function close()
     {
-        if ( ! $this->_useRedis) return parent::close();
+        if (!$this->_useRedis) return parent::close();
         if ($this->_logLevel >= Zend_Log::DEBUG) {
             $this->_log("Closing connection");
         }
@@ -494,7 +494,7 @@ class Cm_RedisSession_Model_Session extends Mage_Core_Model_Mysql4_Session
      */
     public function gc($maxLifeTime)
     {
-        if ( ! $this->_useRedis) return parent::gc($maxLifeTime);
+        if (!$this->_useRedis) return parent::gc($maxLifeTime);
         return TRUE;
     }
 
@@ -503,24 +503,24 @@ class Cm_RedisSession_Model_Session extends Mage_Core_Model_Mysql4_Session
      */
     public function getLifeTime()
     {
-        if ( ! $this->_config) return parent::getLifeTime();
+        if (!$this->_config) return parent::getLifeTime();
 
         if ($this->_lifeTime === NULL) {
             $lifeTime = NULL;
 
             // Detect bots by user agent
-            $botLifetime = ((int) $this->_config->descend('bot_lifetime') ?: self::DEFAULT_BOT_LIFETIME);
+            $botLifetime = ((int)$this->_config->descend('bot_lifetime') ?: self::DEFAULT_BOT_LIFETIME);
             if ($botLifetime) {
                 $userAgent = empty($_SERVER['HTTP_USER_AGENT']) ? FALSE : $_SERVER['HTTP_USER_AGENT'];
-                $isBot = ! $userAgent || preg_match(self::BOT_REGEX, $userAgent);
+                $isBot = !$userAgent || preg_match(self::BOT_REGEX, $userAgent);
                 if ($isBot) {
                     if ($this->_logLevel > Zend_Log::DEBUG) {
                         $this->_log(sprintf("Bot detected for user agent: %s", $userAgent));
                     }
-                    if ( $this->_sessionWrites <= 1
-                      && ($botFirstLifetime = ((int) $this->_config->descend('bot_first_lifetime') ?: self::DEFAULT_BOT_FIRST_LIFETIME))
+                    if ($this->_sessionWrites <= 1
+                      && ($botFirstLifetime = ((int)$this->_config->descend('bot_first_lifetime') ?: self::DEFAULT_BOT_FIRST_LIFETIME))
                     ) {
-                        $lifeTime = $botFirstLifetime * (1+$this->_sessionWrites);
+                        $lifeTime = $botFirstLifetime * (1 + $this->_sessionWrites);
                     } else {
                         $lifeTime = min(parent::getLifeTime(), $botLifetime);
                     }
@@ -529,9 +529,9 @@ class Cm_RedisSession_Model_Session extends Mage_Core_Model_Mysql4_Session
 
             // Use different lifetime for first write
             if ($lifeTime === NULL && $this->_sessionWrites <= 1) {
-                $firstLifetime = ((int) $this->_config->descend('first_lifetime') ?: self::DEFAULT_FIRST_LIFETIME);
+                $firstLifetime = ((int)$this->_config->descend('first_lifetime') ?: self::DEFAULT_FIRST_LIFETIME);
                 if ($firstLifetime) {
-                    $lifeTime = $firstLifetime * (1+$this->_sessionWrites);
+                    $lifeTime = $firstLifetime * (1 + $this->_sessionWrites);
                 }
             }
 
@@ -563,18 +563,18 @@ class Cm_RedisSession_Model_Session extends Mage_Core_Model_Mysql4_Session
         $originalDataSize = strlen($data);
         if ($this->_compressionThreshold > 0 && $this->_compressionLib != 'none' && $originalDataSize >= $this->_compressionThreshold) {
             if ($this->_logLevel >= Zend_Log::DEBUG) {
-                $this->_log(sprintf("Compressing %s bytes with %s", $originalDataSize,$this->_compressionLib));
+                $this->_log(sprintf("Compressing %s bytes with %s", $originalDataSize, $this->_compressionLib));
                 $timeStart = microtime(true);
             }
-            $prefix = ':'.substr($this->_compressionLib,0,2).':';
-            switch($this->_compressionLib) {
+            $prefix = ':' . substr($this->_compressionLib, 0, 2) . ':';
+            switch ($this->_compressionLib) {
                 case 'snappy': $data = snappy_compress($data); break;
                 case 'lzf':    $data = lzf_compress($data); break;
                 case 'lz4':    $data = lz4_compress($data); $prefix = ':l4:'; break;
                 case 'gzip':   $data = gzcompress($data, 1); break;
             }
-            if($data) {
-                $data = $prefix.$data;
+            if ($data) {
+                $data = $prefix . $data;
                 if ($this->_logLevel >= Zend_Log::DEBUG) {
                     $this->_log(sprintf("Data compressed by %.1f percent in %.5f seconds",
                         ($originalDataSize == 0 ? 0 : (100 - (strlen($data) / $originalDataSize * 100))), (microtime(true) - $timeStart)
@@ -597,12 +597,12 @@ class Cm_RedisSession_Model_Session extends Mage_Core_Model_Mysql4_Session
     public function _decodeData($data)
     {
         Varien_Profiler::start(__METHOD__);
-        switch (substr($data,0,4)) {
+        switch (substr($data, 0, 4)) {
             // asking the data which library it uses allows for transparent changes of libraries
-            case ':sn:': $data = snappy_uncompress(substr($data,4)); break;
-            case ':lz:': $data = lzf_decompress(substr($data,4)); break;
-            case ':l4:': $data = lz4_uncompress(substr($data,4)); break;
-            case ':gz:': $data = gzuncompress(substr($data,4)); break;
+            case ':sn:': $data = snappy_uncompress(substr($data, 4)); break;
+            case ':lz:': $data = lzf_decompress(substr($data, 4)); break;
+            case ':l4:': $data = lz4_uncompress(substr($data, 4)); break;
+            case ':gz:': $data = gzuncompress(substr($data, 4)); break;
         }
         Varien_Profiler::stop(__METHOD__);
         return $data;
@@ -611,14 +611,14 @@ class Cm_RedisSession_Model_Session extends Mage_Core_Model_Mysql4_Session
     /**
      * Public for testing/import purposes only.
      *
-     * @param $id
-     * @param $data
+     * @param string $id
+     * @param string $data
      * @param $lifetime
      * @throws Exception
      */
     public function _writeRawSession($id, $data, $lifetime)
     {
-        if ( ! $this->_useRedis) {
+        if (!$this->_useRedis) {
             throw new Exception('Not connected to redis!');
         }
 
@@ -641,7 +641,7 @@ class Cm_RedisSession_Model_Session extends Mage_Core_Model_Mysql4_Session
      */
     public function _inspectSession($id)
     {
-        if ( ! $this->_useRedis) {
+        if (!$this->_useRedis) {
             throw new Exception('Not connected to redis!');
         }
 
@@ -676,20 +676,20 @@ class Cm_RedisSession_Model_Session extends Mage_Core_Model_Mysql4_Session
      */
     public function _getPid()
     {
-        return gethostname().'|'.getmypid();
+        return gethostname() . '|' . getmypid();
     }
 
     /**
-     * @param $pid
+     * @param boolean|string $pid
      * @return bool
      */
     public function _pidExists($pid)
     {
-        list($host,$pid) = explode('|', $pid);
+        list($host, $pid) = explode('|', $pid);
         if (PHP_OS != 'Linux' || $host != gethostname()) {
             return TRUE;
         }
-        return @file_exists('/proc/'.$pid);
+        return @file_exists('/proc/' . $pid);
     }
 
 }
